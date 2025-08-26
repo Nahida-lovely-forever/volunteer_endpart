@@ -4,6 +4,7 @@
     // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "启动 Django 开发服务器",
             "type": "debugpy",
@@ -13,7 +14,7 @@
                 "runserver",
                 "8000"
             ],
-            "justMyCode": true
+            "justMyCode": true,
         }
     ]
 }
