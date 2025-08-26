@@ -13,7 +13,6 @@
                 "runserver",
                 "8000"
             ],
-            "cwd": "F:\\Pycharmprojects\\小程序后端\\djtest",
             "justMyCode": true
         }
     ]
