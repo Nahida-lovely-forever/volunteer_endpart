@@ -3,7 +3,7 @@ from django.http.response import HttpResponse
 from django.views.decorators.http import require_http_methods
 import json
 
-url = ''
+url = '.\\project_database.csv'
 
 
 @require_http_methods(["GET"])
