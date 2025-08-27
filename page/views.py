@@ -3,6 +3,8 @@ from django.http.response import HttpResponse
 from django.views.decorators.http import require_http_methods
 import json
 
+url = ''
+
 
 @require_http_methods(["GET"])
 def get_projects(request):
