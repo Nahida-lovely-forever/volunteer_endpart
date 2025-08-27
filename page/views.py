@@ -2,40 +2,47 @@ from django.http.response import JsonResponse
 from django.http.response import HttpResponse
 from django.views.decorators.http import require_http_methods
 import json
-
+import pandas as pd
 url = ''
 
 
 @require_http_methods(["GET"])
 def get_projects(request):
+    project_database = pd.read_csv('.//project_database.csv')
+    list_zhi=[]
+    list_xue=[]
+    list_qi=[]
+    for index, row in project_database.iterrows():
+        if row['classification'] == '志愿者招募':
+            list_zhi.append(project_database.iloc[index].to_dict())
+        elif row['classification'] == '学术活动':
+            list_xue.append(project_database.iloc[index].to_dict())
+        elif row['classification'] == '其他':
+            list_qi.append(project_database.iloc[index].to_dict())
     data = [
-        [
-            {
-                "title": "统计与数据科学学院更名暨大数据研究院成立大会",
-                "time": "7月10日",
-                "location": "上海财经大学创业中心一楼报告厅",
-                "reward": "校级学术二课"
-            },
-            {
-                "title": "上海图书馆淮海路馆志愿者招募",
-                "time": "6月28日  9:00-16:30",
-                "location": "上海市徐汇区淮海中路1555号",
-                "reward": "第二课堂志愿服务时长记录8h"
-            },
-            {
-                "title": "上海图书馆淮海路馆志愿者招募",
-                "time": "6月29日  9:00-16:30",
-                "location": "上海市徐汇区淮海中路1555号",
-                "reward": "第二课堂志愿服务时长记录8h"
-            }
-        ],
-        [],
-        []
+        list_zhi,list_xue,list_qi
     ]
     return JsonResponse(data, safe=False)
 
 
 @require_http_methods(["POST"])
 def create_project(request):
-    print(json.loads(request.body))
+    project_database = pd.read_csv('.//project_database.csv')
+    id = project_database.shape[0] + 1
+    data = json.loads(request.body)
+    project_database.loc[id] = [
+        id,
+        data.get("title"),
+        data.get("project_description"),
+        data.get("classification"),
+        data.get("date"),
+        data.get("time"),
+        data.get("reward"),
+        data.get("candidate_description"),
+        data.get("max_number"),
+        data.get("contact_name"),
+        data.get("contact_licence_number"),
+        data.get("contact_phone_number")
+    ]
+    project_database.to_csv('project_database.csv', index=False)
     return HttpResponse(1)
