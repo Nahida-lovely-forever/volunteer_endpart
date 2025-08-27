@@ -27,8 +27,8 @@ def get_projects(request):
 
 @require_http_methods(["POST"])
 def create_project(request):
-    project_database = pd.read_csv('.//project_database.csv')
-    with open('../num_variable.txt', 'r') as f:
+    project_database = pd.read_csv('./project_database.csv')
+    with open('./num_variable.txt', 'r') as f:
         id = int(f.read)
     data = json.loads(request.body)
     project_database.loc[id] = [
@@ -47,6 +47,6 @@ def create_project(request):
     ]
     project_database.to_csv('project_database.csv', index=False)
     id += 1
-    with open('..\\num_variable.txt', 'w'):
+    with open('./num_variable.txt', 'w'):
         f.write(str(id))
     return HttpResponse(1)
