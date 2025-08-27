@@ -15,7 +15,7 @@ def get_projects(request):
     for index, row in project_database.iterrows():
         if row['classification'] == '志愿者招募':
             list_zhi.append(project_database.iloc[index].to_dict())
-        elif row['classification'] == '学术活动':
+        elif row['classification'] == '学术支持':
             list_xue.append(project_database.iloc[index].to_dict())
         elif row['classification'] == '其他':
             list_qi.append(project_database.iloc[index].to_dict())
@@ -43,7 +43,8 @@ def create_project(request):
         data.get("max_number"),
         data.get("contact_name"),
         data.get("contact_licence_number"),
-        data.get("contact_phone_number")
+        data.get("contact_phone_number"), 
+        0
     ]
     project_database.to_csv('project_database.csv', index=False)
     id += 1

@@ -1,5 +1,3 @@
-id,title,project_description,classification,date,time,reward,candidate_description,max_number,contact_name,contact_licence_number,contact_phone_number
-1,test1,11erwrqe,志愿者招募,2025-08-27,23145,2314,321456,21436,1234,341256,12345
-5,1,1,学术支持,2025-08-27,1,1,1,1,1,1,1
-10,2,2,其他,2025-08-27,2,2,22,2,2,22,2
-202508270000,3,3,志愿者招募,2025-08-27,3,3,3,3,3,3,3
+id,title,project_description,classification,date,time,reward,candidate_description,max_number,contact_name,contact_licence_number,contact_phone_number,current_participant_number
+202508270001,原神,一款开放世界手游,其他,2025-08-28,23:59:59,1原石,肝上长的人,4,米哈游,114514,1919810,0
+202508270002,须弥,拯救小草神,学术支持,2025-08-28,00:00:00,一只纳西妲,爷,1,须弥院,0000,0000000000,0
