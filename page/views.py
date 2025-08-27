@@ -15,7 +15,7 @@ def get_projects(request):
     for index, row in project_database.iterrows():
         if row['classification'] == '志愿者招募':
             list_zhi.append(project_database.iloc[index].to_dict())
-        elif row['classification'] == '学术活动':
+        elif row['classification'] == '学术支持':
             list_xue.append(project_database.iloc[index].to_dict())
         elif row['classification'] == '其他':
             list_qi.append(project_database.iloc[index].to_dict())
