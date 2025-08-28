@@ -6,7 +6,7 @@ import json
 import pandas as pd
 url = ''
 
-
+# 前端获得全部项目数据
 @require_http_methods(["GET"])
 def get_projects(request):
     project_database = pd.read_csv('.//project_database.csv')
@@ -26,6 +26,7 @@ def get_projects(request):
     return JsonResponse(data, safe=False)
 
 
+# 前端创建新项目数据传回后端
 @require_http_methods(["POST"])
 def create_project(request):
     project_database = pd.read_csv('./project_database.csv')
@@ -55,9 +56,9 @@ def create_project(request):
         f.write(str(id))
     return HttpResponse(1)
 
+# 前端传入code，后端传回openid用户唯一标识id
 @require_http_methods(["POST"])
 def get_openid(request):
-    print(json.loads(request.body))
     code = json.loads(request.body)['code']
     appid = 'wx6b268c7e68efd73a'
     secret = '419f8f5e5623d207e92276c046b353e0'
@@ -66,3 +67,8 @@ def get_openid(request):
     result = response.json()
     openid = result.get('openid')
     return HttpResponse(openid)
+
+# 前端用户删除创建的项目
+@require_http_methods(["POST"])
+def drop_project(request):
+    project_id = json.loads(request.body)['project_id']
