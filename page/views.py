@@ -72,3 +72,7 @@ def get_openid(request):
 @require_http_methods(["POST"])
 def drop_project(request):
     project_id = json.loads(request.body)['project_id']
+    project_database = pd.read_csv('./project_database.csv')
+    project_database = project_database[project_database['id'] != project_id]
+    project_database.to_csv('./project_database.csv', index=False)
+    return HttpResponse(1)
