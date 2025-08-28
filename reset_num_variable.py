@@ -5,7 +5,7 @@ import time
 
 
 def reset_variable():
-    current_date = time.strftime("%Y%m%d")
+    current_date = time.strftime("%Y%m%d")[2:]
     with open('.\\num_variable.txt', 'w') as f:
         f.write(current_date + '0000')
 
