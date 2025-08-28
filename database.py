@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 project_database= pd.DataFrame(
     columns=['id','title','project_description','classification',

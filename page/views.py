@@ -72,3 +72,18 @@ def get_openid(request):
 @require_http_methods(["POST"])
 def drop_project(request):
     project_id = json.loads(request.body)['project_id']
+    project_database = pd.read_csv('./project_database.csv')
+    project_database = project_database[project_database['id'] != project_id]
+    project_database.to_csv('./project_database.csv', index=False)
+    return HttpResponse(1)
+
+# 判断用户是否登录
+@require_http_methods(["POST"])
+def whether_login(request):
+    user_id = json.loads(request.body)['user_id']
+    with open('users_info.json', 'r') as f:
+        data = json.load(f)
+    if user_id in data:
+        return JsonResponse(data[user_id], safe=False)
+    else:
+        return JsonResponse({}, safe=False)
