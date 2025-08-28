@@ -44,8 +44,10 @@ def create_project(request):
         data.get("max_number"),
         data.get("contact_name"),
         data.get("contact_licence_number"),
-        data.get("contact_phone_number"), 
-        0
+        data.get("contact_infomation"), 
+        data.get("project_creator_id"),
+        0,
+        []
     ]
     project_database.to_csv('project_database.csv', index=False)
     id += 1
