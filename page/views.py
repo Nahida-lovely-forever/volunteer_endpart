@@ -82,8 +82,21 @@ def drop_project(request):
 def whether_login(request):
     user_id = json.loads(request.body)['user_id']
     with open('users_info.json', 'r') as f:
-        data = json.load(f)
-    if user_id in data:
-        return JsonResponse(data[user_id], safe=False)
+        dict = json.load(f)
+    if user_id in dict:
+        return JsonResponse(dict[user_id], safe=False)
     else:
         return JsonResponse({}, safe=False)
+    
+# 前端用户填写基本信息传入后端
+@require_http_methods(["POST"])
+def basic_infomation(request):
+    data = json.loads(request.body)
+    with open('users_info.json', 'r') as f:
+        dict = json.load(f)
+    user_id = data.get("user_id")
+    del data['user_id']
+    dict[user_id] = data
+    with open('users_info.json', 'w') as f:
+        json.dump(dict, f, indent=2)
+    return HttpResponse(1)

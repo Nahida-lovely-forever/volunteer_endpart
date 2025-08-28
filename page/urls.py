@@ -7,5 +7,6 @@ urlpatterns = [
     path('create_project/', views.create_project),
     path('get_openid/', views.get_openid),
     path('drop_project/', views.drop_project),
-    path('whether_login/', views.whether_login)
+    path('whether_login/', views.whether_login),
+    path('basic_infomation/', views.basic_infomation),
 ]
