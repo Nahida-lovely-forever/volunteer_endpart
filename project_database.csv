@@ -1,3 +1,1 @@
-id,title,project_description,classification,date,time,reward,candidate_description,max_number,contact_name,contact_licence_number,contact_phone_number,current_participant_number
-202508270001,原神,一款开放世界手游,其他,2025-08-28,23:59:59,1原石,肝上长的人,4,米哈游,114514,1919810,0
-202508270002,须弥,拯救小草神,学术支持,2025-08-28,00:00:00,一只纳西妲,爷,1,须弥院,0000,0000000000,0
+id,title,project_description,classification,date,time,reward,candidate_description,max_number,contact_name,contact_licence_number,contact_phone_number,current_participant_number,project_creator_id,project_participants

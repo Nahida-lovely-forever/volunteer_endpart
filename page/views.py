@@ -1,6 +1,7 @@
 from django.http.response import JsonResponse
 from django.http.response import HttpResponse
 from django.views.decorators.http import require_http_methods
+import requests
 import json
 import pandas as pd
 url = ''
@@ -51,3 +52,15 @@ def create_project(request):
     with open('./num_variable.txt', 'w') as f:
         f.write(str(id))
     return HttpResponse(1)
+
+@require_http_methods(["POST"])
+def get_openid(request):
+    print(json.loads(request.body))
+    code = json.loads(request.body)['code']
+    appid = 'wx6b268c7e68efd73a'
+    secret = '419f8f5e5623d207e92276c046b353e0'
+    url = f"https://api.weixin.qq.com/sns/jscode2session?appid={appid}&secret={secret}&js_code={code}&grant_type=authorization_code"
+    response = requests.get(url)
+    result = response.json()
+    openid = result.get('openid')
+    return HttpResponse(openid)
