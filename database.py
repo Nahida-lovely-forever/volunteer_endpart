@@ -10,7 +10,7 @@ project_database= pd.DataFrame(
 project_database.to_csv('project_database.csv', index=False)
 
 user_info = pd.DataFrame(
-    index=['user_id'],
-    columns=['name','academy','licence_number','contact_information']
+    columns=['id','name','academy','licence_number','contact_information']
 )
+user_info.set_index('id', inplace=True)
 user_info.to_csv('users_info.csv', index=False)
