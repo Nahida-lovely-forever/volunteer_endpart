@@ -95,8 +95,10 @@ def basic_infomation(request):
     with open('users_info.json', 'r') as f:
         dict = json.load(f)
     user_id = data.get("user_id")
-    del data['user_id']
-    dict[user_id] = data
+    dict[user_id]['name'] = data.get("name")
+    dict[user_id]['academy'] = data.get("academy")
+    dict[user_id]['licence_number'] = data.get("licence_number")
+    dict[user_id]['contact_infomation'] = data.get("contact_infomation")
     with open('users_info.json', 'w') as f:
         json.dump(dict, f, indent=2)
     return HttpResponse(1)
