@@ -108,3 +108,14 @@ def basic_infomation(request):
     users_info=users_info.drop_duplicates(subset=['id'], keep='last')
     users_info.to_csv('./users_info.csv', index=False)
     return HttpResponse(1)
+
+#某人参加某一项目
+
+#某人退出某一项目
+
+#列出某人曾经参与过的项目
+
+#列出某人曾经创建过的项目
+
+#将某一项目归档
+
