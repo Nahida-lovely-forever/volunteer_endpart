@@ -1,6 +1,8 @@
 from django.http.response import JsonResponse
 from django.http.response import HttpResponse
 from django.views.decorators.http import require_http_methods
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 import requests
 import json
 import pandas as pd
@@ -77,7 +79,15 @@ def drop_project(request):
     project_database.to_csv('./project_database.csv', index=False)
     return HttpResponse(1)
 
-# 判断用户是否登录
+# 获取用户头像
+@require_http_methods(["POST"])
+def get_user_avatar(request):
+    uploaded_file = request.FILES.get('file')
+    file_path = default_storage.save(uploaded_file.name, ContentFile(uploaded_file.read()))
+    return HttpResponse(file_path)
+
+
+# 获取用户基本信息
 @require_http_methods(["POST"])
 def get_basic_info(request):
     print(json.loads(request.body))
