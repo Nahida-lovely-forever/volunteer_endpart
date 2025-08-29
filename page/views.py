@@ -92,10 +92,11 @@ def get_user_avatar(request):
 def get_basic_info(request):
     print(json.loads(request.body))
     user_id = json.loads(request.body)['user_id']
-    with open('users_info.json', 'r') as f:
-        dict = json.load(f)
-    if user_id in dict:
-        return JsonResponse(dict[user_id], safe=False)
+    user_info=pd.read_csv('./users_info.csv')
+    user_info_dict = user_info.set_index('id').T.to_dict()
+    print(user_info_dict)
+    if user_id in user_info_dict:
+        return JsonResponse(user_info_dict[user_id], safe=False)
     else:
         return JsonResponse({}, safe=False)
     
@@ -103,15 +104,28 @@ def get_basic_info(request):
 @require_http_methods(["POST"])
 def basic_infomation(request):
     data = json.loads(request.body)
-    with open('users_info.json', 'r') as f:
-        dict = json.load(f)
-    user_id = data.get("user_id")
-    dict[user_id] = {}
-    dict[user_id]['name'] = data.get("name")
-    dict[user_id]['academy'] = data.get("academy")
-    dict[user_id]['licence_number'] = data.get("licence_number")
-    dict[user_id]['contact_infomation'] = data.get("contact_infomation")
-    dict[user_id]['avatar'] = data.get("avatar")
-    with open('users_info.json', 'w') as f:
-        json.dump(dict, f, indent=2)
+    
+    users_info=pd.read_csv('./users_info.csv')
+    
+    users_info.loc[len(users_info)] = [
+        data.get("user_id"),
+        data.get("name"),
+        data.get("academy"),
+        int(data.get("licence_number")),
+        int(data.get("contact_infomation")),
+        ""
+    ]
+    users_info=users_info.drop_duplicates(subset=['id'], keep='last')
+    users_info.to_csv('./users_info.csv', index=False)
     return HttpResponse(1)
+
+#某人参加某一项目
+
+#某人退出某一项目
+
+#列出某人曾经参与过的项目
+
+#列出某人曾经创建过的项目
+
+#将某一项目归档
+

@@ -1,5 +1,7 @@
 import pandas as pd
-
+####################################
+#不要运行本文件,本文件用于初始化数据库#
+####################################
 project_database= pd.DataFrame(
     columns=['id','title','project_description','classification',
              'date','time','reward','candidate_description',
@@ -9,8 +11,3 @@ project_database= pd.DataFrame(
     )
 project_database.to_csv('project_database.csv', index=False)
 
-user_info = pd.DataFrame(
-    columns=['id','name','academy','licence_number','contact_information']
-)
-user_info.set_index('id', inplace=True)
-user_info.to_csv('users_info.csv', index=False)
