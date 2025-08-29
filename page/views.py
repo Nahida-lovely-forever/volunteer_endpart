@@ -1,11 +1,14 @@
 from django.http.response import JsonResponse
 from django.http.response import HttpResponse
 from django.views.decorators.http import require_http_methods
-from django.core.files.storage import default_storage
+from django.core.files.storage import FileSystemStorage
 from django.core.files.base import ContentFile
+from django.conf import settings
 import requests
 import json
 import pandas as pd
+import os
+import base64
 url = ''
 
 # 前端获得全部项目数据
@@ -82,20 +85,21 @@ def drop_project(request):
 # 获取用户头像
 @require_http_methods(["POST"])
 def get_user_avatar(request):
-    uploaded_file = request.FILES.get('file')
-    file_path = default_storage.save(uploaded_file.name, ContentFile(uploaded_file.read()))
-    return HttpResponse(file_path)
+    base64_data = str(json.loads(request.body)['image'])
+    users_info=pd.read_csv('./users_info.csv')
+    users_info.loc[users_info['id'] == request.GET.get('user_id'), 'avatar'] = base64_data
+    users_info.to_csv('./users_info.csv', index=False)
+    return HttpResponse(base64_data)
 
 
 # 获取用户基本信息
 @require_http_methods(["POST"])
 def get_basic_info(request):
-    print(json.loads(request.body))
     user_id = json.loads(request.body)['user_id']
-    with open('users_info.json', 'r') as f:
-        dict = json.load(f)
-    if user_id in dict:
-        return JsonResponse(dict[user_id], safe=False)
+    user_info=pd.read_csv('./users_info.csv')
+    user_info_dict = user_info.set_index('id').T.to_dict()
+    if user_id in user_info_dict:
+        return JsonResponse(user_info_dict[user_id], safe=False)
     else:
         return JsonResponse({}, safe=False)
     
@@ -103,15 +107,28 @@ def get_basic_info(request):
 @require_http_methods(["POST"])
 def basic_infomation(request):
     data = json.loads(request.body)
-    with open('users_info.json', 'r') as f:
-        dict = json.load(f)
-    user_id = data.get("user_id")
-    dict[user_id] = {}
-    dict[user_id]['name'] = data.get("name")
-    dict[user_id]['academy'] = data.get("academy")
-    dict[user_id]['licence_number'] = data.get("licence_number")
-    dict[user_id]['contact_infomation'] = data.get("contact_infomation")
-    dict[user_id]['avatar'] = data.get("avatar")
-    with open('users_info.json', 'w') as f:
-        json.dump(dict, f, indent=2)
+    
+    users_info=pd.read_csv('./users_info.csv')
+    
+    users_info.loc[len(users_info)] = [
+        data.get("user_id"),
+        data.get("name"),
+        data.get("academy"),
+        data.get("licence_number"),
+        data.get("contact_infomation"),
+        ""
+    ]
+    users_info=users_info.drop_duplicates(subset=['id'], keep='last')
+    users_info.to_csv('./users_info.csv', index=False)
     return HttpResponse(1)
+
+#某人参加某一项目
+
+#某人退出某一项目
+
+#列出某人曾经参与过的项目
+
+#列出某人曾经创建过的项目
+
+#将某一项目归档
+
