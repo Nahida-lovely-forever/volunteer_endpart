@@ -79,7 +79,8 @@ def drop_project(request):
 
 # 判断用户是否登录
 @require_http_methods(["POST"])
-def whether_login(request):
+def get_basic_info(request):
+    print(json.loads(request.body))
     user_id = json.loads(request.body)['user_id']
     with open('users_info.json', 'r') as f:
         dict = json.load(f)
@@ -95,8 +96,12 @@ def basic_infomation(request):
     with open('users_info.json', 'r') as f:
         dict = json.load(f)
     user_id = data.get("user_id")
-    del data['user_id']
-    dict[user_id] = data
+    dict[user_id] = {}
+    dict[user_id]['name'] = data.get("name")
+    dict[user_id]['academy'] = data.get("academy")
+    dict[user_id]['licence_number'] = data.get("licence_number")
+    dict[user_id]['contact_infomation'] = data.get("contact_infomation")
+    dict[user_id]['avatar'] = data.get("avatar")
     with open('users_info.json', 'w') as f:
         json.dump(dict, f, indent=2)
     return HttpResponse(1)
