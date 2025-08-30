@@ -93,30 +93,34 @@ def get_user_avatar(request):
 
 
 # 获取用户基本信息
-@require_http_methods(["POST"])
+@require_http_methods(["GET"])
 def get_basic_info(request):
-    user_id = json.loads(request.body)['user_id']
+    user_id = request.GET.get("user_id")
     user_info=pd.read_csv('./users_info.csv')
     user_info_dict = user_info.set_index('id').T.to_dict()
     if user_id in user_info_dict:
-        return JsonResponse(user_info_dict[user_id], safe=False)
+        res_dict = {}
+        res_dict["name"] = user_info_dict[user_id]["name"]
+        res_dict["academy"] = user_info_dict[user_id]["academy"]
+        res_dict["licence_number"] = user_info_dict[user_id]["licence_number"]
+        res_dict["contact_information"] = user_info_dict[user_id]["contact_information"]
+        res_dict["avatar"] = user_info_dict[user_id]["avatar"]
+        return JsonResponse(res_dict)
     else:
-        return JsonResponse({}, safe=False)
+        return JsonResponse({})
     
 # 前端用户填写基本信息传入后端
 @require_http_methods(["POST"])
 def basic_infomation(request):
     data = json.loads(request.body)
-    
     users_info=pd.read_csv('./users_info.csv')
-    
     users_info.loc[len(users_info)] = [
         data.get("user_id"),
         data.get("name"),
         data.get("academy"),
         data.get("licence_number"),
         data.get("contact_infomation"),
-        ""
+        data.get("avatar"),
     ]
     users_info=users_info.drop_duplicates(subset=['id'], keep='last')
     users_info.to_csv('./users_info.csv', index=False)
