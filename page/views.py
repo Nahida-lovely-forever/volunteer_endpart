@@ -126,7 +126,14 @@ def basic_infomation(request):
     users_info.to_csv('./users_info.csv', index=False)
     return HttpResponse(1)
 
-#某人参加某一项目
+# 用户参加项目
+@require_http_methods(["POST"])
+def attend_project(request):
+    user_id = request.GET.get("user_id")
+    project_id = request.GET.get("projecty_id")
+    project_database = pd.read_csv('./project_database.csv', index=False)
+    project_database
+    return HttpResponse(1)
 
 #某人退出某一项目
 
