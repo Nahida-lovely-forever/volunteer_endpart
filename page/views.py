@@ -133,7 +133,13 @@ def attend_project(request):
     project_id = request.GET.get("projecty_id")
     project_database = pd.read_csv('./project_database.csv')
     project_database.loc[project_database['id'] == project_id, 'current_participant_number'] = project_database.loc[project_database['id'] == project_id, 'current_participant_number'] + 1
-    project_database.loc[project_database['id'] == project_id, 'participants'].apply(lambda x: x.append(user_id) if user_id not in x else x)
+    attendentlist=[]
+    attendentlist=project_database.loc[project_database['id'] == project_id, 'participants']
+    if user_id not in attendentlist:
+        attendentlist.append(user_id)
+        project_database.loc[project_database['id'] == project_id, 'participants'] = attendentlist
+    else:
+        pass
     project_database.to_csv('./project_database.csv', index=False)
     return HttpResponse(1)
 
