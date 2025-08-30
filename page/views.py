@@ -7,6 +7,7 @@ from django.conf import settings
 import requests
 import json
 import pandas as pd
+import ast 
 import os
 import base64
 url = ''
@@ -130,14 +131,46 @@ def basic_infomation(request):
 @require_http_methods(["POST"])
 def attend_project(request):
     user_id = request.GET.get("user_id")
-    project_id = request.GET.get("projecty_id")
-    project_database = pd.read_csv('./project_database.csv')
-    project_database.loc[project_database['id'] == project_id, 'current_participant_number'] = project_database.loc[project_database['id'] == project_id, 'current_participant_number'] + 1
-    attendentlist=[]
-    attendentlist=project_database.loc[project_database['id'] == project_id, 'participants']
+    project_id = request.GET.get("project_id")
+    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
+    participants_value=project_database.loc[project_database['id'] == project_id, 'project_participants'].iloc[0]
+    if isinstance(participants_value, str):
+        attendentlist = ast.literal_eval( participants_value)  # Safely convert string to list
+    else:
+        attendentlist =  participants_value
+    ######################
+    print(attendentlist)
+    #print(user_id)
+    print(project_id)
+    ######################
     if user_id not in attendentlist:
         attendentlist.append(user_id)
-        project_database.loc[project_database['id'] == project_id, 'participants'] = attendentlist
+        
+        ####################
+        print(project_database)
+        print(project_database.iloc[0]['id'])
+        print(project_database[project_database['id'] == project_id])
+        print(len(project_database[project_database['id'] == project_id]['current_participant_number']))
+        print(project_database[project_database['id'] == project_id]['current_participant_number'])
+        
+        ####################
+
+        currnum=project_database[project_database['id'] == project_id]['current_participant_number'].iloc[0]
+        ####################
+        print(attendentlist)
+        print(currnum)
+        ####################
+        
+        project_database.loc[project_database['id'] == project_id, 'current_participant_number'] = currnum + 1
+        
+        ###########################
+        print(project_database.loc[project_database['id'] == project_id, 'current_participant_number'])
+        #######################
+        
+        project_database.loc[project_database['id'] == project_id, 'project_participants'] = attendentlist
+        #######
+        print(project_database.loc[project_database['id'] == project_id, 'project_participants'])
+        #######
     else:
         pass
     project_database.to_csv('./project_database.csv', index=False)
