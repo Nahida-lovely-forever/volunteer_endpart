@@ -132,7 +132,9 @@ def attend_project(request):
     user_id = request.GET.get("user_id")
     project_id = request.GET.get("projecty_id")
     project_database = pd.read_csv('./project_database.csv', index=False)
-    project_database
+    project_database.loc[project_database['id'] == project_id, 'current_participant_number'] = project_database.loc[project_database['id'] == project_id, 'current_participant_number'] + 1
+    project_database.loc[project_database['id'] == project_id, 'participants'].apply(lambda x: x.append(user_id) if user_id not in x else x)
+    project_database.to_csv('./project_database.csv', index=False)
     return HttpResponse(1)
 
 #某人退出某一项目
