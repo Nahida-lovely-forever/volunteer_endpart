@@ -133,14 +133,15 @@ def attend_project(request):
     user_id = request.GET.get("user_id")
     project_id = request.GET.get("project_id")
     project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
-    participants_value=project_database.loc[project_database['id'] == project_id, 'project_participants'].iloc[0]
-    if isinstance(participants_value, str):
-        attendentlist = ast.literal_eval( participants_value)  # Safely convert string to list
-    else:
-        attendentlist =  participants_value
+    participants_value=project_database.loc[project_database['id'] == project_id, 'project_participants'].values[0]
+    print(participants_value)
+    try:
+        attendentlist = ast.literal_eval(participants_value)
+    except (ValueError, SyntaxError):
+        attendentlist = [] 
     ######################
     print(attendentlist)
-    #print(user_id)
+    print(user_id)
     print(project_id)
     ######################
     if user_id not in attendentlist:
@@ -152,7 +153,6 @@ def attend_project(request):
         print(project_database[project_database['id'] == project_id])
         print(len(project_database[project_database['id'] == project_id]['current_participant_number']))
         print(project_database[project_database['id'] == project_id]['current_participant_number'])
-        
         ####################
 
         currnum=project_database[project_database['id'] == project_id]['current_participant_number'].iloc[0]
@@ -170,6 +170,7 @@ def attend_project(request):
         project_database.loc[project_database['id'] == project_id, 'project_participants'] = attendentlist
         #######
         print(project_database.loc[project_database['id'] == project_id, 'project_participants'])
+        print(project_database)
         #######
     else:
         pass
@@ -177,10 +178,47 @@ def attend_project(request):
     return HttpResponse(1)
 
 #某人退出某一项目
+@require_http_methods(["POST"])
+def quit_project(request):
+    user_id = request.GET.get("user_id")
+    project_id = request.GET.get("project_id")
+    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
+    participants_value=project_database.loc[project_database['id'] == project_id, 'project_participants'].iloc[0]
+    if isinstance(participants_value, str):
+        attendentlist = ast.literal_eval( participants_value)  # Safely convert string to list
+    else:
+        attendentlist =  participants_value
+    if user_id in attendentlist:
+        attendentlist.remove(user_id)
+        currnum=project_database[project_database['id'] == project_id]['current_participant_number'].iloc[0]
+        project_database.loc[project_database['id'] == project_id, 'current_participant_number'] = currnum - 1
+        project_database.loc[project_database['id'] == project_id, 'project_participants'] = attendentlist
+    else:
+        pass
+    project_database.to_csv('./project_database.csv', index=False)
+    return HttpResponse(1)
 
 #列出某人曾经参与过的项目
+@require_http_methods(["GET"])
+def list_attended_projects(request):
+    user_id = request.GET.get("user_id")
+    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
+    attended_projects = project_database[project_database['project_participants'].apply(lambda x: user_id in ast.literal_eval(x) if isinstance(x, str) else x)]
+    return JsonResponse(attended_projects.to_dict(orient='records'), safe=False)
 
 #列出某人曾经创建过的项目
+@require_http_methods(["GET"])
+def list_created_projects(request):
+    user_id = request.GET.get("user_id")
+    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
+    created_projects = project_database[project_database['project_creator_id'] == user_id]
+    return JsonResponse(created_projects.to_dict(orient='records'), safe=False)
 
 #将某一项目归档
-
+@require_http_methods(["POST"])
+def archive_project(request):
+    project_id = request.GET.get("project_id")
+    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
+    project_database.loc[project_database['id'] == project_id, 'status'] = 'archived'
+    project_database.to_csv('./project_database.csv', index=False)
+    return HttpResponse(1)
