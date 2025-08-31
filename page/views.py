@@ -12,7 +12,7 @@ import os
 import base64
 url = ''
 
-# 前端获得全部项目数据 
+# 前端获得全部项目部分数据 
 @require_http_methods(["GET"])
 def get_projects(request):
     project_database = pd.read_csv('.//project_database.csv')
@@ -21,24 +21,33 @@ def get_projects(request):
     list_qi=[]
     with open('project_participants.json', 'r', encoding='utf-8') as f:
         project_participants = json.load(f)
+    desired_keys = ['project_id', 'title', 'time', 'date', 'max_number', 'current_participant_number']
     for index, row in project_database.iterrows():
         if row['classification'] == '志愿者招募':
-            current_project = project_database.iloc[index].to_dict()
-            current_project['project_participants'] = project_participants[current_project['project_id']]
-            list_zhi.append(current_project)
+            project = project_database.iloc[index].to_dict()
+            list_zhi.append({key: project[key] for key in desired_keys if key in project})
         elif row['classification'] == '学术支持':
-            current_project = project_database.iloc[index].to_dict()
-            current_project['project_participants'] = project_participants[current_project['project_id']]
-            list_zhi.append(current_project)
+            project = project_database.iloc[index].to_dict()
+            list_zhi.append({key: project[key] for key in desired_keys if key in project})
         elif row['classification'] == '其他':
-            current_project = project_database.iloc[index].to_dict()
-            current_project['project_participants'] = project_participants[current_project['project_id']]
-            list_zhi.append(current_project)
+            project = project_database.iloc[index].to_dict()
+            list_zhi.append({key: project[key] for key in desired_keys if key in project})
     data = [
         list_zhi,list_xue,list_qi
     ]
     return JsonResponse(data, safe=False)
 
+# 前端获得某一项目具体数据
+@require_http_methods(["GET"])
+def get_project_details(request):
+    project_id = request.GET.get('project_id')
+    project_database = pd.read_csv('.//project_database.csv', dtype='str')
+    with open('project_participants.json', 'r', encoding='utf-8') as f:
+        project_participants = json.load(f)
+    current_project = project_database.loc[project_database['project_id'] == project_id].iloc[0].to_dict()
+    current_project['project_participants'] = project_participants[current_project['project_id']]
+    print(current_project)
+    return JsonResponse(current_project, safe=False)
 
 # 前端创建新项目数据传回后端
 @require_http_methods(["POST"])
@@ -48,7 +57,7 @@ def create_project(request):
         project_id = int(f.read())
     data = json.loads(request.body)
     project_database.loc[id] = [
-        project_id,
+        str(project_id),
         data.get("title"),
         data.get("project_description"),
         data.get("classification"),
@@ -68,10 +77,10 @@ def create_project(request):
         project_participants = json.load(f)
     project_participants[project_id] = []
     with open('project_participants.json', 'w', encoding='utf-8') as f:
-        json.dump(project_participants, indent=4)
+        json.dump(project_participants, f, indent=4)
     project_id += 1
     with open('./num_variable.txt', 'w') as f:
-        f.write(str(id))
+        f.write(str(project_id))
     return HttpResponse(1)
 
 # 前端传入code，后端传回openid用户唯一标识id
@@ -91,13 +100,13 @@ def get_openid(request):
 def drop_project(request):
     project_id = json.loads(request.body)['project_id']
     project_database = pd.read_csv('./project_database.csv')
-    project_database = project_database[project_database['id'] != project_id]
+    project_database = project_database[project_database['project_id'] != project_id]
     project_database.to_csv('./project_database.csv', index=False)
     with open('project_participants.json', 'r', encoding='utf-8') as f:
         project_participants = json.load(f)
     del project_participants[project_id]
     with open('project_participants.json', 'w', encoding='utf-8') as f:
-        json.dump(project_participants, indent=4)
+        json.dump(project_participants, f, indent=4)
     return HttpResponse(1)
 
 # 获取用户头像
@@ -105,7 +114,7 @@ def drop_project(request):
 def get_user_avatar(request):
     base64_data = str(json.loads(request.body)['image'])
     users_info=pd.read_csv('./users_info.csv')
-    users_info.loc[users_info['id'] == request.GET.get('user_id'), 'avatar'] = base64_data
+    users_info.loc[users_info['user_id'] == request.GET.get('user_id'), 'avatar'] = base64_data
     users_info.to_csv('./users_info.csv', index=False)
     return HttpResponse(base64_data)
 
@@ -115,7 +124,7 @@ def get_user_avatar(request):
 def get_basic_info(request):
     user_id = request.GET.get("user_id")
     user_info=pd.read_csv('./users_info.csv')
-    user_info_dict = user_info.set_index('id').T.to_dict()
+    user_info_dict = user_info.set_index('user_id').T.to_dict()
     if user_id in user_info_dict:
         res_dict = {}
         res_dict["name"] = user_info_dict[user_id]["name"]
@@ -140,58 +149,23 @@ def basic_infomation(request):
         data.get("contact_infomation"),
         data.get("avatar"),
     ]
-    users_info=users_info.drop_duplicates(subset=['id'], keep='last')
+    users_info=users_info.drop_duplicates(subset=['user_id'], keep='last')
     users_info.to_csv('./users_info.csv', index=False)
     return HttpResponse(1)
 
-# 用户参加项目  #####
+# 用户参加项目
 @require_http_methods(["POST"])
 def attend_project(request):
     user_id = request.GET.get("user_id")
     project_id = request.GET.get("project_id")
-    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
-    participants_value=project_database.loc[project_database['id'] == project_id, 'project_participants'].values[0]
-    print(participants_value)
-    try:
-        attendentlist = ast.literal_eval(participants_value)
-    except (ValueError, SyntaxError):
-        attendentlist = [] 
-    ######################
-    print(attendentlist)
-    print(user_id)
-    print(project_id)
-    ######################
-    if user_id not in attendentlist:
-        attendentlist.append(user_id)
-        
-        ####################
-        print(project_database)
-        print(project_database.iloc[0]['id'])
-        print(project_database[project_database['id'] == project_id])
-        print(len(project_database[project_database['id'] == project_id]['current_participant_number']))
-        print(project_database[project_database['id'] == project_id]['current_participant_number'])
-        ####################
-
-        currnum=project_database[project_database['id'] == project_id]['current_participant_number'].iloc[0]
-        ####################
-        print(attendentlist)
-        print(currnum)
-        ####################
-        
-        project_database.loc[project_database['id'] == project_id, 'current_participant_number'] = currnum + 1
-        
-        ###########################
-        print(project_database.loc[project_database['id'] == project_id, 'current_participant_number'])
-        #######################
-        
-        project_database.loc[project_database['id'] == project_id, 'project_participants'] = attendentlist
-        #######
-        print(project_database.loc[project_database['id'] == project_id, 'project_participants'])
-        print(project_database)
-        #######
-    else:
-        pass
+    project_database = pd.read_csv('./project_database.csv', dtype='str')
+    project_database.loc[project_database['project_id'] == project_id, 'current_participant_number'] = str(int(project_database.loc[project_database['project_id'] == project_id, 'current_participant_number']) + 1)
     project_database.to_csv('./project_database.csv', index=False)
+    with open('project_participants.json', 'r', encoding='utf-8') as f:
+        project_participants = json.load(f)
+    project_participants[project_id].append(user_id)
+    with open('project_participants.json', 'w', encoding='utf-8') as f:
+        json.dump(project_participants, f, indent=4)
     return HttpResponse(1)
 
 
@@ -215,17 +189,17 @@ def attend_project(request):
 def quit_project(request):
     user_id = request.GET.get("user_id")
     project_id = request.GET.get("project_id")
-    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
-    participants_value=project_database.loc[project_database['id'] == project_id, 'project_participants'].iloc[0]
+    project_database = pd.read_csv('./project_database.csv',dtype={'project_id': str})
+    participants_value=project_database.loc[project_database['project_id'] == project_id, 'project_participants'].iloc[0]
     if isinstance(participants_value, str):
         attendentlist = ast.literal_eval( participants_value)  # Safely convert string to list
     else:
         attendentlist =  participants_value
     if user_id in attendentlist:
         attendentlist.remove(user_id)
-        currnum=project_database[project_database['id'] == project_id]['current_participant_number'].iloc[0]
-        project_database.loc[project_database['id'] == project_id, 'current_participant_number'] = currnum - 1
-        project_database.loc[project_database['id'] == project_id, 'project_participants'] = attendentlist
+        currnum=project_database[project_database['project_id'] == project_id]['current_participant_number'].iloc[0]
+        project_database.loc[project_database['project_id'] == project_id, 'current_participant_number'] = currnum - 1
+        project_database.loc[project_database['project_id'] == project_id, 'project_participants'] = attendentlist
     else:
         pass
     project_database.to_csv('./project_database.csv', index=False)
@@ -235,7 +209,7 @@ def quit_project(request):
 @require_http_methods(["GET"])
 def list_attended_projects(request):
     user_id = request.GET.get("user_id")
-    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
+    project_database = pd.read_csv('./project_database.csv',dtype={'project_id': str})
     attended_projects = project_database[project_database['project_participants'].apply(lambda x: user_id in ast.literal_eval(x) if isinstance(x, str) else x)]
     return JsonResponse(attended_projects.to_dict(orient='records'), safe=False)
 
@@ -243,7 +217,7 @@ def list_attended_projects(request):
 @require_http_methods(["GET"])
 def list_created_projects(request):
     user_id = request.GET.get("user_id")
-    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
+    project_database = pd.read_csv('./project_database.csv',dtype={'project_id': str})
     created_projects = project_database[project_database['project_creator_id'] == user_id]
     return JsonResponse(created_projects.to_dict(orient='records'), safe=False)
 
@@ -251,7 +225,7 @@ def list_created_projects(request):
 @require_http_methods(["POST"])
 def archive_project(request):
     project_id = request.GET.get("project_id")
-    project_database = pd.read_csv('./project_database.csv',dtype={'id': str})
-    project_database.loc[project_database['id'] == project_id, 'status'] = 'archived'
+    project_database = pd.read_csv('./project_database.csv',dtype={'project_id': str})
+    project_database.loc[project_database['project_id'] == project_id, 'status'] = 'archived'
     project_database.to_csv('./project_database.csv', index=False)
     return HttpResponse(1)

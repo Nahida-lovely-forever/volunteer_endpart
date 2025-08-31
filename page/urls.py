@@ -11,4 +11,5 @@ urlpatterns = [
     path('basic_infomation/', views.basic_infomation),
     path('get_user_avatar/', views.get_user_avatar),
     path('attend_project/', views.attend_project),
+    path('get_project_details/', views.get_project_details)
 ]
