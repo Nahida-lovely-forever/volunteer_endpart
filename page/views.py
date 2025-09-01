@@ -10,7 +10,10 @@ import pandas as pd
 import ast 
 import os
 import base64
-url = ''
+from apscheduler.schedulers.background import BackgroundScheduler
+from django_apscheduler.jobstores import DjangoJobStore, register_job
+from apscheduler.jobstores.memory import MemoryJobStore
+import datetime
 
 # 前端获得全部项目部分数据 
 @require_http_methods(["GET"])
@@ -46,7 +49,6 @@ def get_project_details(request):
         project_participants = json.load(f)
     current_project = project_database.loc[project_database['project_id'] == project_id].iloc[0].to_dict()
     current_project['project_participants'] = project_participants[current_project['project_id']]
-    print(current_project)
     return JsonResponse(current_project, safe=False)
 
 # 前端创建新项目数据传回后端
@@ -168,42 +170,60 @@ def attend_project(request):
         json.dump(project_participants, f, indent=4)
     return HttpResponse(1)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#某人退出某一项目
+# 用户退出项目
 @require_http_methods(["POST"])
 def quit_project(request):
     user_id = request.GET.get("user_id")
     project_id = request.GET.get("project_id")
-    project_database = pd.read_csv('./project_database.csv',dtype={'project_id': str})
-    participants_value=project_database.loc[project_database['project_id'] == project_id, 'project_participants'].iloc[0]
-    if isinstance(participants_value, str):
-        attendentlist = ast.literal_eval( participants_value)  # Safely convert string to list
-    else:
-        attendentlist =  participants_value
-    if user_id in attendentlist:
-        attendentlist.remove(user_id)
-        currnum=project_database[project_database['project_id'] == project_id]['current_participant_number'].iloc[0]
-        project_database.loc[project_database['project_id'] == project_id, 'current_participant_number'] = currnum - 1
-        project_database.loc[project_database['project_id'] == project_id, 'project_participants'] = attendentlist
-    else:
-        pass
+    project_database = pd.read_csv('./project_database.csv', dtype='str')
+    project_database.loc[project_database['project_id'] == project_id, 'current_participant_number'] = str(int(project_database.loc[project_database['project_id'] == project_id, 'current_participant_number']) - 1)
     project_database.to_csv('./project_database.csv', index=False)
+    with open('project_participants.json', 'r', encoding='utf-8') as f:
+        project_participants = json.load(f)
+    project_participants[project_id].remove(user_id)
+    with open('project_participants.json', 'w', encoding='utf-8') as f:
+        json.dump(project_participants, f, indent=4)
     return HttpResponse(1)
+
+# 定时归档项目
+# 实例化调度器
+scheduler = BackgroundScheduler()
+# 配置内存存储
+jobstores = {
+    'default': MemoryJobStore()
+}
+scheduler.configure(jobstores=jobstores)
+# 添加定时任务
+@register_job(scheduler, 'interval', seconds=300, id='archive_project')
+def archive_project():
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+    project_database = pd.read_csv('.//project_database.csv')
+    archived_project_database = pd.read_csv('.//archived_project_database.csv')
+    with open('project_participants.json', 'r', encoding='utf-8') as f:
+        project_participants = json.load(f)
+    for index, row in project_database.iterrows():
+        if row['date'] + ' ' + row['time'] <= current_time:
+            archived_project_database.loc[id] = row
+            project_database.drop(index=index, inplace=True)
+        else:
+            break
+
+scheduler.start()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #列出某人曾经参与过的项目
 @require_http_methods(["GET"])

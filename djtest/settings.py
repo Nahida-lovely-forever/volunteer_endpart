@@ -124,3 +124,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'images')  # 上传文件保存目录
 MEDIA_URL = '/images/'  # 访问图片的URL前缀
+
+MIGRATION_MODULES = {}
+
+INSTALLED_APPS = [
+    'django_apscheduler',
+    'django.contrib.admin',
+    'django.contrib.contenttypes',
+    'django.contrib.auth',
+    'django.contrib.messages'
+]
