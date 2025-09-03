@@ -12,5 +12,6 @@ urlpatterns = [
     path('basic_infomation/', views.basic_infomation),
     path('get_user_avatar/', views.get_user_avatar),
     path('attend_project/', views.attend_project),
-    path('quit_project/', views.quit_project)
+    path('quit_project/', views.quit_project),
+    path('list_created_projects/', views.list_created_projects)
 ]

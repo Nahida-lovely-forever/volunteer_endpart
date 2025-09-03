@@ -4,10 +4,10 @@ import pandas as pd
 ####################################
 project_database= pd.DataFrame(
     columns=['project_id','title','project_description','classification',
-             'date','time','reward','candidate_description',
+             'date','time','expected_lasting_time','reward','candidate_description',
              'max_number','contact_name','contact_licence_number',
              'contact_infomation', 'project_creator_id', 
              'current_participant_number',]
     )
 project_database['project_id'] = project_database['project_id'].astype(str)
-project_database.to_csv('archived_project_database.csv', index=False)
+project_database.to_csv('project_database.csv', index=False)

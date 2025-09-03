@@ -24,7 +24,7 @@ def get_projects(request):
     list_qi=[]
     with open('project_participants.json', 'r', encoding='utf-8') as f:
         project_participants = json.load(f)
-    desired_keys = ['project_id', 'title', 'time', 'date', 'max_number', 'current_participant_number']
+    desired_keys = ['project_id', 'title', 'date', 'time', 'expected_lasting_time', 'max_number', 'current_participant_number']
     for index, row in project_database.iterrows():
         if row['classification'] == '志愿者招募':
             project = project_database.iloc[index].to_dict()
@@ -65,6 +65,7 @@ def create_project(request):
         data.get("classification"),
         data.get("date"),
         data.get("time"),
+        data.get("expected_lasting_time"),
         data.get("reward"),
         data.get("candidate_description"),
         data.get("max_number"),
@@ -80,6 +81,11 @@ def create_project(request):
     project_participants[project_id] = []
     with open('project_participants.json', 'w', encoding='utf-8') as f:
         json.dump(project_participants, f, indent=4)
+    with open('create_attend_record.json', 'r', encoding='utf-8') as f:
+        create_attend_record = json.load(f)
+    create_attend_record[data.get("project_creator_id")][0].append(project_id)
+    with open('create_attend_record.json', 'w', encoding='utf-8') as f:
+        json.dump(create_attend_record, f, indent=4)
     project_id += 1
     with open('./num_variable.txt', 'w') as f:
         f.write(str(project_id))
@@ -153,6 +159,11 @@ def basic_infomation(request):
     ]
     users_info=users_info.drop_duplicates(subset=['user_id'], keep='last')
     users_info.to_csv('./users_info.csv', index=False)
+    with open('create_attend_record.json', 'r', encoding='utf-8') as f:
+        create_attend_record = json.load(f)
+    create_attend_record[data.get("user_id")] = [[], []]
+    with open('create_attend_record.json', 'w', encoding='utf-8') as f:
+        json.dump(create_attend_record, f, indent=4)
     return HttpResponse(1)
 
 # 用户参加项目
@@ -168,6 +179,12 @@ def attend_project(request):
     project_participants[project_id].append(user_id)
     with open('project_participants.json', 'w', encoding='utf-8') as f:
         json.dump(project_participants, f, indent=4)
+    with open('create_attend_record.json', 'r', encoding='utf-8') as f:
+        create_attend_record = json.load(f)
+    create_attend_record[user_id][1].append(project_id)
+    create_attend_record[user_id][1].sort()
+    with open('create_attend_record', 'w', encoding='utf-8') as f:
+        json.dump(create_attend_record, f, indent=4)
     return HttpResponse(1)
 
 # 用户退出项目
@@ -183,6 +200,11 @@ def quit_project(request):
     project_participants[project_id].remove(user_id)
     with open('project_participants.json', 'w', encoding='utf-8') as f:
         json.dump(project_participants, f, indent=4)
+    with open('create_attend_record.json', 'r', encoding='utf-8') as f:
+        create_attend_record = json.load(f)
+    create_attend_record[user_id][1].remove(project_id)
+    with open('create_attend_record.json', 'w', encoding='utf-8') as f:
+        json.dump(create_attend_record, f, indent=4)
     return HttpResponse(1)
 
 # 定时归档项目
@@ -196,50 +218,72 @@ scheduler.configure(jobstores=jobstores)
 # 添加定时任务
 @register_job(scheduler, 'interval', seconds=300, id='archive_project')
 def archive_project():
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    print('开始归档项目：')
     project_database = pd.read_csv('.//project_database.csv')
     archived_project_database = pd.read_csv('.//archived_project_database.csv')
     with open('project_participants.json', 'r', encoding='utf-8') as f:
         project_participants = json.load(f)
     for index, row in project_database.iterrows():
+        print('项目时间：', row['date'] + ' ' + row['time'], ' 当前时间：', current_time)
         if row['date'] + ' ' + row['time'] <= current_time:
+            print('**')
             archived_project_database.loc[id] = row
             project_database.drop(index=index, inplace=True)
+            project_database.to_csv('project_database.csv', index=False)
+            archived_project_database.to_csv('archived_project_database.csv', index=False)
         else:
             break
 
 scheduler.start()
 
+#列出某人曾经创建过的项目
+@require_http_methods(["GET"])
+def list_created_projects(request):
+    user_id = request.GET.get("user_id")
+    with open('create_attend_record.json', 'r', encoding='utf-8') as f:
+        create_attend_record = json.load(f)
+    attend_list = create_attend_record[user_id][0]
+    project_database = pd.read_csv('./project_database.csv',dtype={'project_id': str})
+    archived_project_database = pd.read_csv('./archived_project_database.csv',dtype={'project_id': str})    
+    data_returned = [[[], [], []], [[], [], []]]
+    whether_archived = 1
+    for project_id in attend_list:
+        if whether_archived == 1:
+            row = archived_project_database[archived_project_database['project_id'] == str(project_id)].iloc[0].to_dict()
+            print(archived_project_database['project_id'], ' -- ', type(archived_project_database['project_id']))
+            print(project_id, ' -- ', type(project_id))
+            print(row)
+    return HttpResponse(1)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    '''
+    desired_keys = ['project_id', 'title', 'date', 'time', 'expected_lasting_time', 'max_number', 'current_participant_number']
+    for index, row in project_database.iterrows():
+        if row['classification'] == '志愿者招募':
+            project = project_database.iloc[index].to_dict()
+            list_zhi.append({key: project[key] for key in desired_keys if key in project})
+        elif row['classification'] == '学术支持':
+            project = project_database.iloc[index].to_dict()
+            list_zhi.append({key: project[key] for key in desired_keys if key in project})
+        elif row['classification'] == '其他':
+            project = project_database.iloc[index].to_dict()
+            list_zhi.append({key: project[key] for key in desired_keys if key in project})
+    data = [
+        list_zhi,list_xue,list_qi
+    ]
+    return JsonResponse(created_projects.to_dict(orient='records'), safe=False)'''
 
 #列出某人曾经参与过的项目
 @require_http_methods(["GET"])
 def list_attended_projects(request):
     user_id = request.GET.get("user_id")
+    with open('create_attend_record.json', 'r', encoding='utf-8') as f:
+        create_attend_record = json.load(f)
+    
     project_database = pd.read_csv('./project_database.csv',dtype={'project_id': str})
     attended_projects = project_database[project_database['project_participants'].apply(lambda x: user_id in ast.literal_eval(x) if isinstance(x, str) else x)]
     return JsonResponse(attended_projects.to_dict(orient='records'), safe=False)
 
-#列出某人曾经创建过的项目
-@require_http_methods(["GET"])
-def list_created_projects(request):
-    user_id = request.GET.get("user_id")
-    project_database = pd.read_csv('./project_database.csv',dtype={'project_id': str})
-    created_projects = project_database[project_database['project_creator_id'] == user_id]
-    return JsonResponse(created_projects.to_dict(orient='records'), safe=False)
 
 #将某一项目归档
 @require_http_methods(["POST"])
